@@ -19,9 +19,6 @@ public class WorkerThread extends Thread {
 	}
 
 	public void run() {
-	}
-
-	public void sum() {
 		// This will load the MySQL driver, each DB has its own driver
 		try {
 			connect();
@@ -41,8 +38,9 @@ public class WorkerThread extends Thread {
 	public void connect() throws Exception{
 		Class.forName("com.mysql.jdbc.Driver");
 		// Setup the connection with the DB
-		this.connect = DriverManager.getConnection("jdbc:mysql://localhost/" + source + "?user=root&password=123456");
-	}	
+		this.connect = DriverManager.getConnection("jdbc:mysql://localhost/?user=root&password=123456");
+	}
+	
 	public void disconnect() throws SQLException{
 		this.connect.close();
 	}
@@ -52,7 +50,8 @@ public class WorkerThread extends Thread {
 		Statement statement = this.connect.createStatement();
 		// Result set get the result of the SQL query
 		ResultSet resultSet = statement.executeQuery("select count(*) from " + source + ".Foo");
-		int count = resultSet.getInt(0);
+		resultSet.next();
+		int count = resultSet.getInt(1);
 		return count;
 	}
 	public void init() throws SQLException{
@@ -62,6 +61,11 @@ public class WorkerThread extends Thread {
 			Statement statement = this.connect.createStatement();
 			statement.execute(sql);
 		}
+	}
+	public void clear() throws SQLException{
+		String sql = "delete from " + source + ".Foo";
+		Statement statement = this.connect.createStatement();
+		statement.execute(sql);
 	}
 	public int getSumVal() throws SQLException{
 		Statement statement = this.connect.createStatement();
@@ -73,9 +77,12 @@ public class WorkerThread extends Thread {
 		}
 		return sum;
 	}
-	public void storeSum(int sum) throws SQLException{
+	
+	public int storeSum(int sum) throws SQLException{
+		int id = 0;
 		Statement statement = this.connect.createStatement();
 		String sql = "insert into " + target + ".Stat (source, sum) values (" + source + "," + sum + ")";
 		statement.execute(sql);
+		return id;
 	}
 }
